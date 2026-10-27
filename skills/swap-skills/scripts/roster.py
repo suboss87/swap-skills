@@ -31,6 +31,15 @@ ROOTS = [
     ("project-agents", CWD / ".agents" / "skills"),
 ]
 PLUGIN_CACHE = HOME / ".claude" / "plugins" / "cache"
+# claude.ai syncs its skills into buckets here; Claude Code loads them as "anthropic-skills:<name>".
+SYNCED = HOME / ".claude" / "skills" / "synced"
+SYNCED_PREFIX = "anthropic-skills"
+# Which agent loads which root, for per-agent context cost.
+AGENT_OF = {
+    "claude": "claude-code", "project-claude": "claude-code", "plugin": "claude-code",
+    "claude-synced": "claude-code", "agents": "codex", "project-agents": "codex",
+    "codex": "codex", "cursor": "cursor", "gemini": "gemini",
+}
 INSTALLED_PLUGINS = HOME / ".claude" / "plugins" / "installed_plugins.json"
 LOCK_FILES = [HOME / ".agents" / ".skill-lock.json", CWD / "skills-lock.json"]
 CLAUDE_LOGS = HOME / ".claude" / "projects"
@@ -253,6 +262,23 @@ def overlap_hints(skills, threshold):
     return sorted(pairs, key=lambda p: -p["similarity"])[:40]
 
 
+def tokens_by_agent(skills):
+    """Each agent pays only for the roots it loads."""
+    out = {}
+    for s in skills:
+        for agent in sorted({AGENT_OF.get(c["root"], c["root"]) for c in s["copies"]}):
+            out[agent] = out.get(agent, 0) + s["context_tokens"]
+    return out
+
+
+def same_name_hints(skills):
+    """One name from two sources (say a local copy and a plugin) is a likely duplicate."""
+    seen = {}
+    for s in skills:
+        seen.setdefault(s["name"], []).append(s["source"])
+    return [{"a": n, "b": n, "similarity": 1.0, "sources": src} for n, src in seen.items() if len(src) > 1]
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--json", metavar="FILE", help="write the full roster as JSON ('-' for stdout)")
@@ -266,7 +292,15 @@ def main():
             for d in sorted(root.iterdir()):
                 if d.name.startswith(".") or not (d.is_dir() or d.is_symlink()):
                     continue
+                if d.absolute() == SYNCED:
+                    continue
                 entries.append(inspect(label, d))
+    if SYNCED.is_dir():
+        for bucket in sorted(SYNCED.iterdir()):
+            if bucket.is_dir() and not bucket.name.startswith("."):
+                for d in sorted(bucket.iterdir()):
+                    if d.is_dir() and not d.name.startswith("."):
+                        entries.append(inspect("claude-synced", d, plugin=SYNCED_PREFIX))
     for plugin, d in plugin_dirs():
         if d.is_dir():
             entries.append(inspect("plugin", d, plugin=plugin))
@@ -296,7 +330,10 @@ def main():
         if len(hashes) > 1:
             roots = ", ".join(c["root"] for c in copies)
             s["problems"] = s["problems"] + [f"copies differ ({roots})"]
-        s["source"] = (lock.get(name) or {}).get("source") or (f"plugin:{s['plugin']}" if s["plugin"] else "local")
+        if s["plugin"]:
+            s["source"] = "claude.ai sync" if s["plugin"] == SYNCED_PREFIX else f"plugin:{s['plugin']}"
+        else:
+            s["source"] = (lock.get(name) or {}).get("source") or "local"
         s["uses_total"] = u.get("total", 0)
         s["uses_window"] = u.get("window", 0)
         s["last_used"] = u.get("last_used")
@@ -311,12 +348,13 @@ def main():
         "totals": {
             "skills": len(skills),
             "always_loaded_tokens": sum(s["context_tokens"] for s in skills),
+            "tokens_by_agent": tokens_by_agent(skills),
             "never_used": sum(1 for s in skills if s["uses_total"] == 0),
             "idle_in_window": sum(1 for s in skills if s["uses_window"] == 0),
             "with_problems": sum(1 for s in skills if s["problems"]),
         },
         "skills": skills,
-        "overlap_hints": overlap_hints(skills, args.overlap),
+        "overlap_hints": same_name_hints(skills) + overlap_hints(skills, args.overlap),
     }
 
     if args.json:
@@ -329,7 +367,8 @@ def main():
 
     if args.json != "-":
         t = report["totals"]
-        print(f"{t['skills']} skills | ~{t['always_loaded_tokens']} tokens always loaded | "
+        per_agent = ", ".join(f"{a} ~{n}" for a, n in sorted(t["tokens_by_agent"].items()))
+        print(f"{t['skills']} skills | always-loaded tokens: {per_agent} | "
               f"{t['never_used']} never used | {t['idle_in_window']} idle {args.days}d | "
               f"{t['with_problems']} with problems | {log_files} transcripts scanned\n")
         print(f"{'skill':34} {'uses':>5} {'last':>10} {'tokens':>6}  source / problems")

@@ -58,6 +58,8 @@ def check(p):
         return "not found"
     if PLUGIN_CACHE in p.parents or PLUGIN_CACHE in p.resolve().parents:
         return "plugin skill. Run: claude plugin disable <plugin>"
+    if (HOME / ".claude" / "skills" / "synced") in p.parents:
+        return "claude.ai synced skill. Turn it off in claude.ai Settings > Capabilities > Skills"
     if p.is_symlink() and not p.exists():
         return None  # broken symlink: benching it is the fix
     if not (p / "SKILL.md").is_file():

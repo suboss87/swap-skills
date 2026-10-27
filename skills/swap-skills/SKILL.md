@@ -16,7 +16,7 @@ Run the roster scan from the user's working directory, so project skills count t
 python3 <skill-dir>/scripts/roster.py --json /tmp/swap-skills-roster.json --days 60
 ```
 
-It reads every skill folder (Claude Code, `npx skills`, Codex, Cursor, Gemini, plugins, this project) and every Claude Code and Codex transcript. For each skill it reports uses, last use, always-loaded token cost, source, and problems. Read the JSON, not just the table. Transcripts only cover what the logs still hold, so zero uses means "no evidence", not proof. Say so once.
+It reads every skill folder (Claude Code, claude.ai synced skills, `npx skills`, Codex, Cursor, Gemini, plugins, this project) and every Claude Code and Codex transcript. For each skill it reports uses, last use, always-loaded token cost, source, and problems. Read the JSON, not just the table. Transcripts only cover what the logs still hold, so zero uses means "no evidence", not proof. Say so once.
 
 Done when you hold the whole roster: every skill, its numbers, and the overlap hints.
 
@@ -70,6 +70,7 @@ Only for the rows the user accepted:
 
 - **Bench:** `python3 <skill-dir>/scripts/bench.py out <path> ...`, with each path from the skill's `copies` in the scan, so no copy stays behind.
 - **Plugin:** `claude plugin disable <plugin>`.
+- **claude.ai synced skill** (source `claude.ai sync`): the user turns it off in claude.ai Settings > Capabilities > Skills. Give them the list.
 - **Sub in:** `npx -y skills add <owner/repo@skill> -g -y`, then bench the skill it replaces.
 - **Fix:** edit the frontmatter or relink, then rerun the scan.
 

@@ -7,10 +7,10 @@ You installed a skill for every problem you ever had. Now your agent carries all
 When I ran this on my own machine:
 
 ```
-133 skills | ~8695 tokens always loaded | 115 never used | 115 idle 60d | 29 with problems
+186 skills | always-loaded tokens: claude-code ~14152, codex ~9108 | 161 never used | 31 with problems
 ```
 
-115 skills sat in my agent's context on every turn. Not one shows a single call in my agent history.
+161 skills sat in my agents' context on every turn. Not one shows a single call in my agent history.
 
 `swap-skills` treats your skills like a team roster. It pulls the real stats from your agent's history, calls every skill, benches the dead weight, merges the duplicates, and scouts a better public skill for every job still worth doing. You say yes. It makes the moves. Everything comes back with one command.
 
@@ -33,7 +33,7 @@ It costs zero context until you call it. A skill that cleans up skill bloat shou
 
 ## What happens
 
-1. **Stats.** A scan reads every skill folder (Claude Code, `npx skills`, Codex, Cursor, Gemini, plugins, the current project) and every Claude Code and Codex transcript. Per skill: uses, last use, tokens it costs every turn, where it came from, what is broken.
+1. **Stats.** A scan reads every skill folder (Claude Code, claude.ai synced skills, `npx skills`, Codex, Cursor, Gemini, plugins, the current project) and every Claude Code and Codex transcript. Per skill: uses, last use, tokens it costs every turn, where it came from, what is broken. Token cost is totalled per agent, because each agent loads only its own folders.
 2. **Calls.** Every skill gets one verdict.
 
    | | Verdict | Meaning |
@@ -70,7 +70,7 @@ python3 $S/bench.py back <skill-name>   # one skill
 python3 $S/bench.py list                # what is on the bench
 ```
 
-Plugin skills are never moved. The skill disables the plugin instead.
+Plugin skills and claude.ai synced skills are never moved. The skill tells you where to turn them off instead.
 
 ## Run the scan on its own
 
