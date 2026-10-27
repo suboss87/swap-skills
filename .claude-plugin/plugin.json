@@ -1,0 +1,10 @@
+{
+  "name": "swap-skills",
+  "version": "1.0.0",
+  "description": "Bench the skills you never use, sub in better ones. A roster review for your agent.",
+  "author": { "name": "Subash Natarajan", "url": "https://github.com/suboss87" },
+  "repository": "https://github.com/suboss87/swap-skills",
+  "license": "MIT",
+  "keywords": ["skills", "cleanup", "context", "audit", "productivity"],
+  "skills": ["./skills/swap-skills"]
+}

@@ -1,0 +1,5 @@
+interface:
+  display_name: "Swap Skills"
+  short_description: "Bench unused skills, sub in better ones"
+policy:
+  allow_implicit_invocation: false

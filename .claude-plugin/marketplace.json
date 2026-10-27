@@ -1,0 +1,14 @@
+{
+  "name": "swap-skills",
+  "owner": { "name": "Subash Natarajan", "url": "https://github.com/suboss87" },
+  "description": "Bench the skills you never use, sub in better ones.",
+  "plugins": [
+    {
+      "name": "swap-skills",
+      "source": "./",
+      "description": "A roster review for your agent: find dead, duplicate and weak skills, bench them, and scout better replacements.",
+      "category": "productivity",
+      "keywords": ["skills", "cleanup", "context", "audit"]
+    }
+  ]
+}
